@@ -54,13 +54,13 @@ class ANiStrmProxy(_PluginBase):
     # 插件名称
     plugin_name = "ANiStrmProxy"
     # 插件描述
-    plugin_desc = "自动获取当季所有番剧，免去下载，轻松拥有一个番剧媒体库(修改自 https://github.com/honue/MoviePilot-Plugins，仅替换为镜像地址)"
+    plugin_desc = "修改自honue大佬的anistrm,提供了自行替换ANIOPEN自行替换镜像地址功能。"
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/honue/MoviePilot-Plugins/main/icons/anistrm.png"
     # 插件版本
     plugin_version = "0.0.1"
     # 插件作者
-    plugin_author = "Lei"
+    plugin_author = "honue,Leiserx"
     # 作者主页
     author_url = "https://github.com/Leiserx"
     # 插件配置项ID前缀
@@ -68,7 +68,7 @@ class ANiStrmProxy(_PluginBase):
     # 加载顺序
     plugin_order = 15
     # 可使用的用户级别
-    auth_level = 2
+    auth_level = 1
 
     # 私有属性
     _enabled = False
@@ -77,6 +77,8 @@ class ANiStrmProxy(_PluginBase):
     _onlyonce = False
     _fulladd = False
     _storageplace = None
+    # 镜像地址
+    _imagepath = None
 
     # 定时器
     _scheduler: Optional[BackgroundScheduler] = None
@@ -91,6 +93,7 @@ class ANiStrmProxy(_PluginBase):
             self._onlyonce = config.get("onlyonce")
             self._fulladd = config.get("fulladd")
             self._storageplace = config.get("storageplace")
+            self._imagepath = config.get("imagepath")
             # 加载模块
         if self._enabled or self._onlyonce:
             # 定时服务
@@ -131,8 +134,8 @@ class ANiStrmProxy(_PluginBase):
 
     @retry(Exception, tries=3, logger=logger, ret=[])
     def get_current_season_list(self) -> List:
-        url = f'https://ani.v300.eu.org/{self.__get_ani_season()}/'
-
+        url = f'{self._imagepath}{self.__get_ani_season()}/'
+        logger.info(url)
         rep = RequestUtils(ua=settings.USER_AGENT if settings.USER_AGENT else None,
                            proxies=settings.PROXY if settings.PROXY else None).post(url=url)
         logger.debug(rep.text)
@@ -157,13 +160,14 @@ class ANiStrmProxy(_PluginBase):
             # 链接
             link = DomUtils.tag_value(item, "link", default="")
             rss_info['title'] = title
-            rss_info['link'] = link.replace("resources.ani.rip", "openani.an-i.workers.dev")
+            rss_info['link'] = link.replace("resources.ani.rip", self._imagepath.replace("https://", "").replace("http://", "").replace("/", ""))
             ret_array.append(rss_info)
         return ret_array
 
     def __touch_strm_file(self, file_name, file_url: str = None) -> bool:
         if not file_url:
-            src_url = f'https://ani.v300.eu.org/{self._date}/{file_name}?d=true'
+            src_url = f'{self._imagepath}{self._date}/{file_name}?d=true'
+            logger.info(src_url)
         else:
             src_url = file_url
         file_path = f'{self._storageplace}/{file_name}.strm'
@@ -304,6 +308,23 @@ class ANiStrmProxy(_PluginBase):
                                         }
                                     }
                                 ]
+                            },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 4
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VTextField',
+                                        'props': {
+                                            'model': 'imagepath',
+                                            'label': 'ani镜像代理地址',
+                                            'placeholder': 'https://openani.an-i.workers.dev/'
+                                        }
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -316,14 +337,13 @@ class ANiStrmProxy(_PluginBase):
                                     'cols': 12,
                                 },
                                 'content': [
-                                    {
+                                     {
                                         'component': 'VAlert',
                                         'props': {
-                                            'type': 'info',
+                                            'type': 'error',
                                             'variant': 'tonal',
-                                            'text': '自动从open ANi抓取下载直链生成strm文件，免去人工订阅下载' + '\n' +
-                                                    '配合目录监控使用，strm文件创建在/downloads/strm' + '\n' +
-                                                    '通过目录监控转移到link媒体库文件夹 如/downloads/link/strm  mp会完成刮削',
+                                            'text': '代码修改自honue大佬，我只添加了镜像代理，如果可以直连访问ANIOPEN则不需要使用' + '\n' +
+                                                    '此处给出大佬仓库地址：https://github.com/honue/MoviePilot-Plugins',
                                             'style': 'white-space: pre-line;'
                                         }
                                     },
@@ -332,8 +352,8 @@ class ANiStrmProxy(_PluginBase):
                                         'props': {
                                             'type': 'info',
                                             'variant': 'tonal',
-                                            'text': 'emby容器需要设置代理，docker的环境变量必须要有http_proxy代理变量，大小写敏感，具体见readme.' + '\n' +
-                                                    'https://github.com/honue/MoviePilot-Plugins',
+                                            'text': '使用方法一样，如果无法直接访问ANIOPEN可以自行添加ani镜像代理地址既可'+'\n'+
+                                            '',
                                             'style': 'white-space: pre-line;'
                                         }
                                     }
@@ -349,6 +369,7 @@ class ANiStrmProxy(_PluginBase):
             "fulladd": False,
             "storageplace": '/downloads/strm',
             "cron": "*/20 22,23,0,1 * * *",
+            "imagepath": "https://openani.an-i.workers.dev/"
         }
 
     def __update_config(self):
@@ -358,6 +379,7 @@ class ANiStrmProxy(_PluginBase):
             "enabled": self._enabled,
             "fulladd": self._fulladd,
             "storageplace": self._storageplace,
+            "imagepath": self._imagepath,
         })
 
     def get_page(self) -> List[dict]:
@@ -378,6 +400,6 @@ class ANiStrmProxy(_PluginBase):
 
 
 if __name__ == "__main__":
-    anistrm = ANiStrm()
-    name_list = anistrm.get_latest_list()
+    anistrmproxy = ANiStrmProxy()
+    name_list = anistrmproxy.get_latest_list()
     print(name_list)
