@@ -2,10 +2,10 @@
   "ANiStrmProxy": {
     "name": "ANi Strm Proxy",
     "description": "修改自honue大佬的anistrm,提供了自行替换ANIOPEN自行替换镜像地址功能。",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "v2": true,
     "icon": "https://raw.githubusercontent.com/honue/MoviePilot-Plugins/main/icons/anistrm.png",
-    "author": "Leiserx",
+    "author": "honue,Leiserx",
     "level": 2
   }
 }
