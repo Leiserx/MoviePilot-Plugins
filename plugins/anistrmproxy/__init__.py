@@ -50,21 +50,21 @@ def retry(ExceptionToCheck: Any,
     return deco_retry
 
 
-class ANiStrm(_PluginBase):
+class ANiStrmProxy(_PluginBase):
     # 插件名称
-    plugin_name = "ANiStrm"
+    plugin_name = "ANiStrmProxy"
     # 插件描述
-    plugin_desc = "自动获取当季所有番剧，免去下载，轻松拥有一个番剧媒体库"
+    plugin_desc = "自动获取当季所有番剧，免去下载，轻松拥有一个番剧媒体库(修改自 https://github.com/honue/MoviePilot-Plugins，仅替换为镜像地址)"
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/honue/MoviePilot-Plugins/main/icons/anistrm.png"
     # 插件版本
-    plugin_version = "2.4.2"
+    plugin_version = "0.0.1"
     # 插件作者
-    plugin_author = "honue"
+    plugin_author = "Lei"
     # 作者主页
-    author_url = "https://github.com/honue"
+    author_url = "https://github.com/Leiserx"
     # 插件配置项ID前缀
-    plugin_config_prefix = "anistrm_"
+    plugin_config_prefix = "anistrmproxy_"
     # 加载顺序
     plugin_order = 15
     # 可使用的用户级别
@@ -100,16 +100,16 @@ class ANiStrm(_PluginBase):
                 try:
                     self._scheduler.add_job(func=self.__task,
                                             trigger=CronTrigger.from_crontab(self._cron),
-                                            name="ANiStrm文件创建")
-                    logger.info(f'ANi-Strm定时任务创建成功：{self._cron}')
+                                            name="ANiStrmProxy文件创建")
+                    logger.info(f'ANi-Strm-Proxy定时任务创建成功：{self._cron}')
                 except Exception as err:
                     logger.error(f"定时任务配置错误：{str(err)}")
 
             if self._onlyonce:
-                logger.info(f"ANi-Strm服务启动，立即运行一次")
+                logger.info(f"ANi-Strm-Proxy服务启动，立即运行一次")
                 self._scheduler.add_job(func=self.__task, args=[self._fulladd], trigger='date',
                                         run_date=datetime.now(tz=pytz.timezone(settings.TZ)) + timedelta(seconds=3),
-                                        name="ANiStrm文件创建")
+                                        name="ANiStrmProxy文件创建")
                 # 关闭一次性开关 全量转移
                 self._onlyonce = False
                 self._fulladd = False
@@ -131,7 +131,7 @@ class ANiStrm(_PluginBase):
 
     @retry(Exception, tries=3, logger=logger, ret=[])
     def get_current_season_list(self) -> List:
-        url = f'https://openani.an-i.workers.dev/{self.__get_ani_season()}/'
+        url = f'https://ani.v300.eu.org/{self.__get_ani_season()}/'
 
         rep = RequestUtils(ua=settings.USER_AGENT if settings.USER_AGENT else None,
                            proxies=settings.PROXY if settings.PROXY else None).post(url=url)
@@ -163,7 +163,7 @@ class ANiStrm(_PluginBase):
 
     def __touch_strm_file(self, file_name, file_url: str = None) -> bool:
         if not file_url:
-            src_url = f'https://openani.an-i.workers.dev/{self._date}/{file_name}?d=true'
+            src_url = f'https://ani.v300.eu.org/{self._date}/{file_name}?d=true'
         else:
             src_url = file_url
         file_path = f'{self._storageplace}/{file_name}.strm'
