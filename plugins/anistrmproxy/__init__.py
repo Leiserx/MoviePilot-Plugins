@@ -58,7 +58,7 @@ class ANiStrmProxy(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/honue/MoviePilot-Plugins/main/icons/anistrm.png"
     # 插件版本
-    plugin_version = "0.0.2"
+    plugin_version = "0.0.3"
     # 插件作者
     plugin_author = "honue,Leiserx"
     # 作者主页
@@ -160,7 +160,7 @@ class ANiStrmProxy(_PluginBase):
             # 链接
             link = DomUtils.tag_value(item, "link", default="")
             rss_info['title'] = title
-            rss_info['link'] = link.replace("resources.ani.rip", self._imagepath.replace("https://", "").replace("http://", "").replace("/", ""))
+            rss_info['link'] = link.replace("resources.ani.rip", self._imagepath.replace("https://", "").replace("http://", "").rstrip("/"))
             ret_array.append(rss_info)
         return ret_array
 
